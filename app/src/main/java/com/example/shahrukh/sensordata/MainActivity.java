@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -16,7 +17,9 @@ import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -34,16 +37,22 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.text.DateFormat;
 import java.util.Date;
+import java.util.Set;
+import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
     public String tagfilename;
     public boolean stop=false,tagflag=false;
     static public final int REQUEST_LOCATION = 1,permissionCheck=2;
     public TextView latitude,longitude,lightview,pitchview,gpsBearing,speed;
+
     public EditText samplingrate;
-    public Button getlocation,getlight,record,anglebutton,samplingok,taggingbutton;
+    public Button getlocation,getlight,record,anglebutton,samplingok,taggingbutton,lightMeterDatabutton;
     public LocationManager locationm;
     public SensorManager lightsense;
     public Sensor lsensor;
@@ -263,6 +272,7 @@ public class MainActivity extends AppCompatActivity {
         taggingbutton=(Button)findViewById(R.id.taggingbutton);
         gpsBearing = (TextView) findViewById(R.id.gpsbearing);
         speed = (TextView) findViewById(R.id.speed);
+
         mLightMeterButtonCLicked = false;
 
 
@@ -424,6 +434,18 @@ public class MainActivity extends AppCompatActivity {
                 }
 
             });
+
+        lightMeterDatabutton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent openApp = getPackageManager().getLaunchIntentForPackage("com.hioki.dpm");
+                if(openApp != null){
+                    startActivity(openApp);
+                    mLightMeterButtonCLicked = true;
+                }
+
+            }
+        });
 
 
         }
