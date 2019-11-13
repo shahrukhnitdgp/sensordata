@@ -5,7 +5,6 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Color;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -13,17 +12,11 @@ import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.net.wifi.WifiManager;
-import android.nfc.Tag;
 import android.os.Environment;
-import android.os.Handler;
-import android.os.ParcelUuid;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -41,25 +34,21 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.text.DateFormat;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.Set;
-import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
     public String tagfilename;
     public boolean stop=false,tagflag=false;
     static public final int REQUEST_LOCATION = 1,permissionCheck=2;
-    public TextView latitude,longitude,lightview,pitchview,gpsBearingbutton;
+    public TextView latitude,longitude,lightview,pitchview,gpsBearing,speed;
     public EditText samplingrate;
-    public Button getlocation,getlight,record,anglebutton,samplingok,taggingbutton,lightMeterDatabutton;
+    public Button getlocation,getlight,record,anglebutton,samplingok,taggingbutton;
     public LocationManager locationm;
     public SensorManager lightsense;
     public Sensor lsensor;
     public Double recent_lightvalue=0.0,latitud=0.0,longitud=0.0;
+    public double speedValue = 0.0, bearingValue = 0.0;
     public FileOutputStream fos,tagos;
 //    public Handler handle=new Handler();
     public Thread newthread;
@@ -95,6 +84,9 @@ public class MainActivity extends AppCompatActivity {
                     longitud=location.getLongitude();
                     latitude.setText(latitud+"");
                     longitude.setText(longitud+"");
+                    speedValue = location.getSpeed()*3600/1000;
+                    speedValue =  Math.round(speedValue * 100.0) / 100.0;
+                    speed.setText( speedValue + "km/hr");
                 }
 
                 @Override
@@ -155,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             }
-            String heading="LIGHT,LATITUDE,LONGITUDE,TILT,TIMESTAMP\n";
+            String heading="LIGHT,LATITUDE,LONGITUDE,TILT,TIMESTAMP,SPEED\n";
             try {
                 fos.write(heading.getBytes());
             }
@@ -181,7 +173,7 @@ public class MainActivity extends AppCompatActivity {
                     //loop provides 3ms delay for writing
                     while (System.currentTimeMillis()!=prev_time+delay){}
                     timenow=System.currentTimeMillis();
-                    String dd = recent_lightvalue + "," + latitud + "," + longitud +","+recent_pitchvalue+","+timenow+ "\n";
+                    String dd = recent_lightvalue + "," + latitud + "," + longitud +","+recent_pitchvalue+","+timenow+","+ speedValue +"\n";
                     try {
                         fos.write(dd.getBytes());
                     } catch (IOException e) {
@@ -269,8 +261,8 @@ public class MainActivity extends AppCompatActivity {
         msensor = sManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
         samplingok=(Button)findViewById(R.id.samplingok);
         taggingbutton=(Button)findViewById(R.id.taggingbutton);
-        gpsBearingbutton = (TextView) findViewById(R.id.gpsbearing);
-        lightMeterDatabutton = (Button) findViewById(R.id.lightmeterdata);
+        gpsBearing = (TextView) findViewById(R.id.gpsbearing);
+        speed = (TextView) findViewById(R.id.speed);
         mLightMeterButtonCLicked = false;
 
 
@@ -433,18 +425,6 @@ public class MainActivity extends AppCompatActivity {
 
             });
 
-        lightMeterDatabutton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent openApp = getPackageManager().getLaunchIntentForPackage("com.hioki.dpm");
-                if(openApp != null){
-                    startActivity(openApp);
-                    mLightMeterButtonCLicked = true;
-                }
-
-            }
-        });
-
 
         }
 
@@ -460,11 +440,6 @@ public class MainActivity extends AppCompatActivity {
             if (lightsense != null)
                 lightsense.unregisterListener(light);
             sManager.unregisterListener(pit);
-
-            if (mLightMeterButtonCLicked) {
-                // add coordinates support
-                getWindow().getDecorView().findViewById(android.R.id.content).setOnTouchListener(handleTouch);
-            }
 
 
 //            Toast.makeText(this, "gps and light sensor stopped ", Toast.LENGTH_SHORT).show();
@@ -485,21 +460,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
-    private View.OnTouchListener handleTouch = new View.OnTouchListener() {
 
-        @Override
-        public boolean onTouch(View v, MotionEvent event) {
-
-            int x = (int) event.getX();
-            int y = (int) event.getY();
-
-            if (event.getAction()== MotionEvent.ACTION_DOWN) {
-                    Toast.makeText(getApplicationContext(),"Touched :",Toast.LENGTH_LONG).show();
-            }
-
-            return true;
-        }
-    };
 
 
 
